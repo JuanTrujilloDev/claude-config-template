@@ -1,84 +1,61 @@
-# AI-assisted setup
+# Claude setup prompt — verbatim
 
-Paste this entire prompt into Claude Code (or any Claude chat with file access)
-from inside the project you want to configure. Claude will read the project,
-infer the right answers for each placeholder, generate an `answers.env`, and
-run `setup.sh`. Anything Claude can't determine confidently it will ask about
-before writing files.
+The README's "Per-project: tell Claude" section is the casual version. This is the precise version, useful if you want to script the setup or feed it into an agent.
 
----
+## The prompt
 
-## Prompt to paste
+```
+Set up Claude Code config from the template at <ABSOLUTE PATH TO TEMPLATE REPO>.
 
-> I want to set up Claude Code config in this project using the
-> [claude-config-template](https://github.com/<your-username>/claude-config-template).
-> The template lives at `<absolute path to your local clone of the template repo>`.
->
-> Please do the following:
->
-> 1. **Inspect the project I'm currently in.**
->    Read `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Gemfile`,
->    `requirements.txt`, `manage.py`, top-level `README.md`, and the source
->    layout. From that, infer:
->    - **Language + version** (Python 3.x, Node 20.x, Go 1.22, etc.)
->    - **Backend framework** (Django, FastAPI, Flask, Express, NestJS, Rails, etc.)
->    - **Frontend stack** (Next.js, Vue, plain templates, none — if API-only)
->    - **Source directory** (`src/`, `apps/`, `lib/`, etc.)
->    - **Test command** — check `package.json` scripts, `pyproject.toml` `[tool.pytest]`, or look for `pytest.ini` / `Makefile`
->    - **Lint command** — check for `eslint`, `ruff`, `pylint`, `golangci-lint`, etc.
->    - **Format command** — `prettier`, `black`, `ruff format`, `gofmt`, etc.
->    - **Build / dev-server command** — `npm run dev`, `python manage.py runserver`, `cargo run`, etc.
->    - **Default branch name** — check `git remote show origin` or `.git/HEAD`
->    - **Database** — `settings.py`, `database.yml`, `prisma/schema.prisma`, `docker-compose.yml`
->    - **Background tasks** — does the project use Celery / BullMQ / Sidekiq?
->    - **E2E testing** — is Playwright / Cypress installed?
->
-> 2. **Read `<template repo path>/template.config.yaml`** so you know every
->    placeholder the template expects.
->
-> 3. **Make a draft `answers.env`** in the project root with one
->    `KEY=VALUE` line per placeholder. For anything you genuinely can't
->    determine — *and only those* — leave the value blank and add a
->    `# TODO: <what's missing>` comment on the line above.
->
-> 4. **Show me the answers.env** before doing anything else. List the answers
->    in three groups:
->    - **Inferred with high confidence** — what you derived and from where (cite the file).
->    - **Inferred with low confidence** — your best guess + the alternative.
->    - **Unknown — please confirm** — the TODOs.
->
-> 5. **Wait for my approval or edits.**
->
-> 6. **After I approve, run:**
->    ```bash
->    bash <template repo path>/setup.sh --target . --answers ./answers.env
->    ```
->    and confirm the script ran successfully.
->
-> 7. **Add to `.gitignore`** (creating one if missing):
->    ```
->    .claude/settings.local.json
->    .claude/mcp.json
->    answers.env
->    ```
->
-> 8. **Restart-Claude-Code reminder.** Tell me Claude Code needs to be
->    restarted to pick up the new hooks and slash commands.
->
-> Do not modify anything else. Do not invent placeholder values where the
-> project doesn't tell you. If a value is genuinely ambiguous, ask one
-> targeted clarifying question and stop.
+1. Inspect the project I'm currently in.
+   Read package.json, pyproject.toml, Cargo.toml, go.mod, Gemfile,
+   requirements.txt, manage.py, top-level README.md, and the source layout.
+   From those, infer answers for every variable defined in
+   <TEMPLATE PATH>/template.config.yaml — language, framework, src_dir,
+   test/lint/format/build commands, default branch, has_frontend, has_celery,
+   has_e2e, ticket_tracker, etc.
 
----
+2. Draft an answers.env at the project root. One KEY=VALUE per line.
+   For each value, classify your confidence:
+     - HIGH    — derived directly from a config file (cite the file).
+     - LOW     — best guess; show the alternative.
+     - UNKNOWN — left blank, with a `# TODO: <what's missing>` line above.
 
-## Why this prompt is shaped this way
+3. Show me the answers.env grouped by confidence level. WAIT for my approval
+   or edits.
 
-- **It tells Claude where the template is.** Without this, Claude would have
-  to guess. Replace `<absolute path>` with your real path before pasting.
-- **It limits Claude to inference + question, not invention.** The "low
-  confidence + TODO" pattern keeps you in the loop on real ambiguities.
-- **It separates draft from action.** Claude never writes `.claude/` until
-  you approve the answers — so if you spot a wrong test command, you can fix
-  it in one place before substitution.
-- **It explicitly excludes git config and .gitignore additions** as the only
-  side effect besides the setup script — so you can audit the diff easily.
+4. After I approve, run:
+     bash <TEMPLATE PATH>/setup.sh --target . --answers ./answers.env
+
+5. Add to .gitignore (creating it if missing):
+     .claude/settings.local.json
+     .claude/mcp.json
+     answers.env
+
+6. Tell me Claude Code needs to be restarted to pick up the new hooks
+   and slash commands.
+
+Do not modify anything else. Do not invent placeholder values where the
+project doesn't tell you. If a value is genuinely ambiguous, ask one
+targeted clarifying question and stop.
+```
+
+## Why it's shaped this way
+
+- **Confidence labels** keep you in the loop on real ambiguities. A value Claude gets wrong silently costs more than one it asks about.
+- **Draft → approve → render** prevents Claude from writing 30+ files only to discover the test command was wrong.
+- **Explicit `.gitignore` step** stops the local settings file and any MCP secrets from leaking.
+- **"Do not invent values"** is the most important instruction — it's how you tell the difference between an inference and a hallucination.
+
+## Variant: I trust Claude, just go
+
+If you want the no-approval-gate version (use it on throwaway projects only):
+
+```
+Set up Claude Code config from <TEMPLATE PATH>. Read this project, infer
+all answers from config files and source layout, write answers.env, run
+setup.sh, update .gitignore. Don't ask me anything unless something is
+genuinely ambiguous.
+```
+
+Faster, but you trade away the chance to catch a wrong inference before 30+ files are written.

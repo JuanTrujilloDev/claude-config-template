@@ -35,3 +35,10 @@ Save to `docs/plans/<branch-slug>-fe-design.md`. Include:
 - **Responsive breakpoints**
 - **Edge cases** (empty, loading, error)
 - **Accessibility** (focus order, labels, contrast)
+
+## Gotchas
+
+- **Inventing a new pattern when one exists.** Always check the design system / existing components first. A new pattern needs justification.
+- **Designing only the happy path.** Every screen has empty, loading, error, and success states. If you describe only one, the implementer will guess the others.
+- **Forgetting accessibility.** Focus order, keyboard nav, and contrast aren't optional. Call them out in the spec or the implementing agent will skip them.
+- **Over-detailed mockups for trivial changes.** A wireframe in markdown is enough for most things. Reach for pixel-perfect mockups only when visual fidelity is the point.

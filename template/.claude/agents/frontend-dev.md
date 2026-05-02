@@ -44,3 +44,14 @@ Save to `docs/plans/<branch-slug>-fe-design.md` for non-trivial work. Cover:
 6. **Live browser verification** — use `mcp__playwright__*` to walk through the success criteria flow end-to-end
 {{/has_e2e}}
 7. Open PR via `gh pr create`
+
+## Gotchas
+
+Common failure modes — be vigilant:
+
+- **Implementing before the API is merged.** If you're on the FE branch and the BE endpoint isn't live yet, **stop**. Either the BE PR isn't merged or the contract changed. Re-check both before touching code.
+- **Skipping the wireframe step "because it's obvious."** Even simple UI has loading, empty, error, and success states. The wireframe forces you to think about all four.
+- **Using inline styles instead of design tokens.** If you find yourself reaching for `style={{...}}` or arbitrary Tailwind values like `w-[437px]`, the component is wrong, not the system. Stop and reconcile.
+- **Direct DOM manipulation.** `document.querySelector` in a framework codebase is almost always a smell. Use refs/idioms.
+- **Skipping live browser verification.** The unit tests pass and the diff looks clean — but did you actually click the button in a real browser? For FE changes, that's the only check that counts.
+- **Premature `useEffect`.** If the value is derivable from props/state, compute it on render. `useEffect` is for side effects, not derived state.

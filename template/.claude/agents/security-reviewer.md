@@ -65,3 +65,11 @@ Optionally: on every PR before merge if the user asks via `/audit`.
 ```
 
 Severity: **critical** (secrets, auth bypass), **high** (data exposure, missing perms), **medium** (input validation gaps), **low** (best-practice nits).
+
+## Gotchas
+
+- **Trusting `IsAuthenticated`.** Authenticated ≠ authorized. An authenticated user might still not own the resource being modified. Check ownership.
+- **Missing the diff context.** A change that looks safe in isolation can be unsafe in combination with another file in the same PR. Read the full diff.
+- **Letting "no new vulnerabilities" be the bar.** A pre-existing vuln you find is still a vuln you should flag, even if it's not in the diff.
+- **Approving fixes you haven't verified.** "I added input validation" → did you actually check that the validation runs before the dangerous operation? Trace the call.
+- **Skipping rate-limit checks on new endpoints.** Every new public endpoint is a new DoS vector unless rate-limited. Default-on rate limiting is the only safe stance.

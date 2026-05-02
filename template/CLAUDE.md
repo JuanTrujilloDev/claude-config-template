@@ -153,6 +153,27 @@ You **MUST** spawn the appropriate agent before any **non-trivial** edit. "Trivi
 - `linear` — Linear ticket pull (used by `/feature`)
 {{/ticket_tracker_linear}}
 
+## Dynamic Context (optional)
+
+Claude Code expands `` !`shell command` `` in this file at session start, injecting the live output into context. Useful for keeping the model oriented to the current state of the repo without you having to mention it.
+
+Pick the lines that are useful for your team and uncomment them. Skip everything that's noise.
+
+```markdown
+<!-- Current branch + status — keeps the model honest about where you are -->
+<!-- Current branch: !`git rev-parse --abbrev-ref HEAD` -->
+<!-- Recent commits: !`git log --oneline -5` -->
+<!-- Uncommitted changes: !`git status --short` -->
+
+<!-- Open PRs / issues — useful when /feature pulls a ticket -->
+<!-- Open PRs: !`gh pr list --limit 5 --json number,title,headRefName --jq '.[] | "  #\(.number) [\(.headRefName)] \(.title)"' 2>/dev/null || echo "  (gh not configured)"` -->
+
+<!-- Test coverage — surface drift before code-reviewer asks -->
+<!-- Coverage: !`{{test_cmd}} --cov={{src_dir}} 2>/dev/null | tail -1 || echo "(run tests to see coverage)"` -->
+```
+
+Inject only what's cheap to compute (sub-second commands). Anything slow makes session start sluggish.
+
 ## Security
 
 - Never commit `.env` files; use env vars for secrets

@@ -41,3 +41,10 @@ You produce high-level documentation for {{project_name}}: Statements of Work (S
 Output goes to `docs/specs/<YYYY-MM-DD>-<slug>.md`.
 
 After producing the brief, hand off to `pm` for decomposition into tickets.
+
+## Gotchas
+
+- **Confusing a brief with a spec.** A brief states the problem and the goal; a spec dictates the solution. Stay on the brief side. Implementation choices belong in `pm`'s plan or the dev agent's Design First.
+- **Padding success criteria.** Three sharp, verifiable criteria beat eight vague ones. Resist the urge to enumerate everything that *could* be checked.
+- **Skipping "out of scope".** Out-of-scope items prevent the implementing agent from quietly expanding the work. Always include this section, even if short.
+- **Leaving open questions buried.** If a question genuinely blocks the brief (e.g. "what happens to existing rows?"), surface it in the doc *and* mention it explicitly when handing off.

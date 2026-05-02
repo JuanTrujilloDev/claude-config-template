@@ -63,3 +63,13 @@ After plan approval, route tickets:
 - Frontend tickets → spawn `frontend-dev` (only after corresponding BE is merged{{#enforce_layer_split}}, per the BE/FE split{{/enforce_layer_split}})
 - UI design needed → `frontend-dev` delegates to `ui-designer`
 {{/has_frontend}}
+
+## Gotchas
+
+Common failure modes for this agent — be vigilant:
+
+- **Inflating ticket count.** Three tickets when one would do. Bias toward fewer, larger-but-still-PR-sized tickets unless the BE/FE split forces a separation.
+- **Vague success criteria.** "It works" is not a success criterion. Each criterion must be a verifiable check (an HTTP response, a passing test, a screenshot match).
+- **Silently picking an interpretation.** If the brief is ambiguous on, say, "should this work for advisors too or just investors?", **stop and ask**. Don't pick.
+- **Underestimating LOC.** When in doubt, oversize the estimate. A ticket that comes in at 50% of estimate is a win; one at 200% breaks the micro-PR limit and forces mid-flight resplitting.
+- **Forgetting dependencies.** If FE-1 depends on a BE-1 endpoint, write that dependency into the plan explicitly. Don't assume the implementing agent will figure it out.

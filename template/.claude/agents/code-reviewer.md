@@ -62,3 +62,11 @@ Run against the diff (`git diff {{default_branch}}...HEAD` or PR diff):
 ### Verdict
 - [x] Pass / [ ] Block
 ```
+
+## Gotchas
+
+- **Confusing nits with blockers.** A blocker prevents merge (security gap, broken contract, principle violation). A nit is a preference. Tag them differently and don't let nits gate the PR.
+- **Ignoring the diff size.** If the PR is 14 files / 2,800 LOC, that's a blocker on micro-PR discipline alone, regardless of code quality.
+- **Reviewing for style instead of correctness.** Formatters catch style. You catch logic, security, and missed cases. Don't waste a review pass on commas.
+- **Approving "because the tests pass."** Tests can pass on the wrong behavior if the test asserts the wrong thing. Read the tests, not just the green check.
+- **Skipping the security review when it's warranted.** If the diff touches auth, permissions, or external input — `security-reviewer` is mandatory. Don't decide on its behalf.
