@@ -1,0 +1,15 @@
+# Test outputs from running setup.sh in dev
+/test-output/
+/.test-target/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Per-user setup answers (when developing the template itself)
+/answers.env

@@ -1,0 +1,157 @@
+# Placeholder schema for the Claude Code config template.
+# setup.sh reads this file, prompts the user for each variable in order,
+# substitutes {{name}} occurrences across the template/ tree, and writes
+# the result to the target directory.
+#
+# Each variable has:
+#   prompt:   the question shown to the user
+#   default:  pre-filled value (press Enter to accept)
+#   choices:  optional list — restricts input to these values
+#   when:     optional dependency — variable only asked if condition holds
+#
+# Conditional sections inside template files use:
+#   {{#var_name}}...{{/var_name}}        (kept when var_name is truthy)
+#   {{^var_name}}...{{/var_name}}        (kept when var_name is falsy/empty)
+
+variables:
+
+  # --- Project identity ---
+  - name: project_name
+    prompt: "Project name (human-readable, e.g. '351 Exchange')"
+    default: ""
+
+  - name: project_slug
+    prompt: "Project slug (kebab-case, used in URLs/branches)"
+    default_from: project_name      # auto-derive: lowercase + spaces->hyphens
+    transform: kebab
+
+  - name: project_description
+    prompt: "One-line project description"
+    default: ""
+
+  # --- Tech stack ---
+  - name: language
+    prompt: "Primary language"
+    choices: [Python, TypeScript, JavaScript, Go, Rust, Ruby, Java, Other]
+    default: Python
+
+  - name: language_version
+    prompt: "Language version (e.g. '3.12+', '20.x')"
+    default: ""
+
+  - name: backend_framework
+    prompt: "Backend framework (e.g. 'Django + DRF', 'FastAPI', 'Express')"
+    default: ""
+
+  - name: has_frontend
+    prompt: "Does this project have a frontend (templates, SPA, etc.)?"
+    choices: [yes, no]
+    default: yes
+
+  - name: frontend_framework
+    prompt: "Frontend framework (e.g. 'Django Templates + HTMX', 'Next.js 14', 'Vue 3')"
+    default: ""
+    when: has_frontend == yes
+
+  - name: database
+    prompt: "Database (e.g. 'PostgreSQL', 'SQLite', 'MongoDB')"
+    default: PostgreSQL
+
+  # --- Code structure ---
+  - name: src_dir
+    prompt: "Primary source directory (where app code lives, relative to repo root)"
+    default: "src"
+
+  - name: tests_glob
+    prompt: "Tests location glob (e.g. 'tests/', 'apps/**/tests/')"
+    default: "tests/"
+
+  - name: frontend_dir
+    prompt: "Frontend source directory"
+    default: "frontend/"
+    when: has_frontend == yes
+
+  # --- Commands ---
+  - name: format_cmd
+    prompt: "Format command (run after edits)"
+    default: ""
+
+  - name: lint_cmd
+    prompt: "Lint command"
+    default: ""
+
+  - name: test_cmd
+    prompt: "Test command"
+    default: ""
+
+  - name: build_cmd
+    prompt: "Build / dev-server command"
+    default: ""
+
+  - name: test_coverage_target
+    prompt: "Minimum test coverage target (percent)"
+    default: "80"
+
+  # --- Code style ---
+  - name: line_length
+    prompt: "Line length (chars)"
+    default: "100"
+
+  - name: formatter
+    prompt: "Formatter(s) (e.g. 'black + ruff', 'prettier')"
+    default: ""
+
+  - name: linter
+    prompt: "Linter(s) (e.g. 'ruff + pylint', 'eslint')"
+    default: ""
+
+  # --- Git workflow ---
+  - name: branch_prefix
+    prompt: "Branch ticket prefix (e.g. '351', 'PROJ', or empty for none)"
+    default: ""
+
+  - name: ticket_tracker
+    prompt: "Ticket tracker"
+    choices: [Plane, Jira, Linear, GitHub, none]
+    default: GitHub
+
+  - name: max_files_per_pr
+    prompt: "Max files per PR"
+    default: "12"
+
+  - name: max_loc_per_pr
+    prompt: "Max lines changed per PR"
+    default: "3000"
+
+  - name: default_branch
+    prompt: "Default branch name"
+    default: "main"
+
+  # --- Optional features ---
+  - name: has_celery
+    prompt: "Does the project use Celery (background tasks)?"
+    choices: [yes, no]
+    default: no
+
+  - name: has_e2e
+    prompt: "Use Playwright MCP for live browser verification?"
+    choices: [yes, no]
+    default: yes
+    when: has_frontend == yes
+
+  - name: enforce_layer_split
+    prompt: "Enforce strict BE/FE PR split (separate PRs for each layer)?"
+    choices: [yes, no]
+    default: no
+    when: has_frontend == yes
+
+  # --- MCPs ---
+  - name: mcp_plane_workspace
+    prompt: "Plane workspace slug"
+    default: ""
+    when: ticket_tracker == Plane
+
+  - name: mcp_plane_host
+    prompt: "Plane API host URL"
+    default: "https://api.plane.so"
+    when: ticket_tracker == Plane
