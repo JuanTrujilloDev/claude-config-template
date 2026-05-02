@@ -139,6 +139,13 @@ Several patterns — embedded "Gotchas" sections in agents, tighter permission w
 
 The agent / hook / micro-PR architecture was lifted from a working Django/HTMX project where it had time to bake.
 
+## Support
+
+If this saved you time, you can support continued work on it:
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/JuanTrujilloDev)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/juantrujillodev)
+
 ## License
 
 MIT.
