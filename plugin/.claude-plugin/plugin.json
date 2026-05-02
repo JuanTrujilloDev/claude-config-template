@@ -1,0 +1,21 @@
+{
+  "name": "claude-config-template",
+  "description": "Battle-tested Claude Code config: 7 agents, 9 slash commands (incl. /setup-template for full project calibration), 3 hooks, 3 skills (principles + style guides), 4 pre-filled stack examples.",
+  "version": "0.3.0",
+  "author": {
+    "name": "Juan Trujillo",
+    "url": "https://juantrujillo.dev"
+  },
+  "homepage": "https://github.com/JuanTrujilloDev/claude-config-template",
+  "repository": "https://github.com/JuanTrujilloDev/claude-config-template",
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "workflow",
+    "code-review",
+    "hooks",
+    "templates",
+    "scaffolding",
+    "principles"
+  ]
+}

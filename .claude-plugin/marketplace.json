@@ -1,0 +1,26 @@
+{
+  "name": "juantrujillodev",
+  "description": "Battle-tested Claude Code configurations from Juan Trujillo",
+  "owner": {
+    "name": "Juan Trujillo",
+    "url": "https://juantrujillo.dev"
+  },
+  "plugins": [
+    {
+      "name": "claude-config-template",
+      "source": "./plugin",
+      "description": "Battle-tested Claude Code config: 7 agents, 9 slash commands (incl. /setup-template for full project calibration), 3 hooks, 3 skills.",
+      "version": "0.3.0",
+      "homepage": "https://github.com/JuanTrujilloDev/claude-config-template",
+      "license": "MIT",
+      "keywords": [
+        "agents",
+        "workflow",
+        "code-review",
+        "hooks",
+        "scaffolding",
+        "principles"
+      ]
+    }
+  ]
+}

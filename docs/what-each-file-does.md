@@ -117,3 +117,46 @@ The trigger regex is conservative — it errs toward injecting (better to remind
 | A coding pattern that should be auto-loaded for a file glob | `rules/` |
 | A user-triggered shortcut | `commands/` |
 | A check that should run before/after every Edit | `hooks/` |
+
+---
+
+## Plugin variant — what's different
+
+The repo ships *two* distributable artifacts: the **template** (`template/` + `setup.sh`, parameterized) and the **plugin** (`plugin/` + `.claude-plugin/marketplace.json`, static-but-installable). Same DNA, different distribution.
+
+### `plugin/.claude-plugin/plugin.json`
+
+The plugin manifest — name, description, version, author, license. Claude Code reads this when listing/installing plugins. The `name` field also acts as the namespace for slash commands (`/claude-config-template:feature`, `/claude-config-template:plan`, etc.).
+
+### `plugin/agents/`
+
+Same 7 agents as the template, but with stack-agnostic phrasing ("your project's test command" instead of `pytest`). Path references to `.claude/rules/` are replaced with `the principles skill` / `the backend-style skill` references, since the plugin ships those as skills, not as auto-loaded rules.
+
+### `plugin/commands/`
+
+Same 8 slash commands. Available as `/claude-config-template:<name>` once installed.
+
+### `plugin/skills/`
+
+The principles and style guides shipped as skills (the new convention per the Claude Code plugin docs). Each has YAML frontmatter with a `description` so Claude knows when to invoke them.
+
+### `plugin/hooks/hooks.json` + `plugin/hooks/*.sh`
+
+The same three hooks (agent-enforcement, auto-format, coding-reminder) but wired through `hooks.json` (the plugin format) instead of the project's `settings.json`. The `agent-enforcement.sh` script reads env vars (`CLAUDE_CONFIG_SRC_DIR`, `CLAUDE_CONFIG_FRONTEND_DIR`, `CLAUDE_CONFIG_DEFAULT_BRANCH`) with sensible defaults — users override per-project via direnv or shell rc.
+
+### `.claude-plugin/marketplace.json`
+
+The repo-as-marketplace listing. Lets users do `/plugin marketplace add JuanTrujilloDev/claude-config-template` and discover the single plugin inside.
+
+## When to use plugin vs template
+
+| | Plugin | Template |
+|---|---|---|
+| **Install** | `/plugin install` (one line) | Clone + Claude-driven render |
+| **Project specifics** | env vars override generic defaults | Baked-in placeholders |
+| **CLAUDE.md for the project** | You write a short one yourself | Generated, fully calibrated |
+| **Hooks** | Read env vars, fall back to defaults | Hardcoded to your project |
+| **Style guides** | Stack-agnostic skills | Tailored prose |
+| **Best for** | Quick adoption across many repos | One repo where you want full precision |
+
+You can use both — the plugin gives every project a baseline of agents/commands/principles; the template promotes a specific project to "fully calibrated" status.

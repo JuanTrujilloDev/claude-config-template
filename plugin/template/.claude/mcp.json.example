@@ -1,0 +1,22 @@
+{
+  "//": "Copy this to mcp.json and fill in real values. mcp.json is gitignored.",
+  "mcpServers": {
+{{#has_e2e}}
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }{{#ticket_tracker_plane}},{{/ticket_tracker_plane}}
+{{/has_e2e}}
+{{#ticket_tracker_plane}}
+    "plane": {
+      "command": "npx",
+      "args": ["-y", "@makeplane/plane-mcp-server"],
+      "env": {
+        "PLANE_API_KEY": "${PLANE_API_KEY}",
+        "PLANE_WORKSPACE_SLUG": "{{mcp_plane_workspace}}",
+        "PLANE_API_HOST_URL": "{{mcp_plane_host}}"
+      }
+    }
+{{/ticket_tracker_plane}}
+  }
+}

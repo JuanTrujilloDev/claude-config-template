@@ -8,51 +8,14 @@
 
 <sub>Stop reconfiguring `.claude/` from scratch on every project. Clone the template once, tell Claude *"set this up"*, and a minute later your repo has a battle-tested `.claude/` tree calibrated to your stack.</sub>
 
-[![GitHub Sponsors](https://img.shields.io/badge/♥-Sponsor-30363D?logo=github-sponsors&logoColor=EA4AAA&style=flat)](https://github.com/sponsors/JuanTrujilloDev)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=ko-fi&logoColor=white&style=flat)](https://ko-fi.com/juantrujillodev)
-[![Quick Start](https://img.shields.io/badge/Quick_Start-→-2EA043?style=flat)](#-quick-start)
+[![Install Plugin](https://img.shields.io/badge/Install-Plugin-CC785C?logo=anthropic&logoColor=white&style=flat)](#-quick-start)
+[![Use Template](https://img.shields.io/badge/Use-Template-2EA043?logo=githubactions&logoColor=white&style=flat)](#-quick-start)
 [![Examples](https://img.shields.io/badge/Examples-4_stacks-8A2BE2?style=flat)](#-pre-filled-examples)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](#license)
+[![GitHub Sponsors](https://img.shields.io/badge/♥-Sponsor-30363D?logo=github-sponsors&logoColor=EA4AAA&style=flat)](https://github.com/sponsors/JuanTrujilloDev)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=ko-fi&logoColor=white&style=flat)](https://ko-fi.com/juantrujillodev)
 
 </div>
-
----
-
-## 🎬 What it looks like
-
-```
-You:    set up Claude Code config from ~/code/claude-config-template
-
-Claude: 📂 Reading pyproject.toml, package.json, manage.py, source layout...
-        🔍 Detected: Python 3.12 · Django 5.2 · DRF · pytest · ruff · Celery
-        📝 Drafting answers.env...
-
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        ✓ HIGH confidence (15)    from pyproject.toml + manage.py
-            project_name        = 351 Exchange
-            language            = Python
-            backend_framework   = Django + DRF
-            test_cmd            = pytest
-            format_cmd          = ruff check --fix . && black .
-            ...
-        ⚠ LOW confidence (2)      best guess
-            branch_prefix       = 351   (inferred from PROJECT_NUMBER env)
-            ticket_tracker      = Plane (saw plane.alternova.dev in mcp.json)
-        ✗ UNKNOWN (1)             please confirm
-            enforce_layer_split = ?     # toggle BE/FE PR split?
-
-        Approve? (yes / edit / cancel)
-
-You:    yes, enforce_layer_split=yes
-
-Claude: ⚡ Rendering 25 files into ./.claude/ + ./CLAUDE.md
-        ✓ Added .claude/settings.local.json + answers.env to .gitignore
-        🔁 Restart Claude Code to load the new hooks + slash commands.
-
-        Done in 47 seconds. Welcome to your new /feature, /audit, /pr workflow.
-```
-
-That's the entire setup. Claude reads your project, infers what it can, asks about the rest, and writes the files. No 25-question terminal wizard — Claude already knows half the answers.
 
 ---
 
@@ -76,41 +39,66 @@ It's not a generic project scaffolder — [cookiecutter](https://github.com/cook
 
 ## 🚀 Quick start
 
-You only ever set this up from inside Claude Code. There's no "answer 25 questions in your terminal" mode — Claude does the asking, because Claude can read your project and infer 90% of the answers without bothering you.
+One install gets you everything. Optional second step calibrates a specific project to its exact stack.
 
-### One-time: clone the template
+### Install once
 
-```bash
-git clone https://github.com/JuanTrujilloDev/claude-config-template.git ~/code/claude-config-template
+Inside Claude Code:
+
+```
+/plugin marketplace add JuanTrujilloDev/claude-config-template
+/plugin install claude-config-template@juantrujillodev
 ```
 
-### Per-project: tell Claude
+You now have **7 agents** (`pm`, `*-dev`, `ui-designer`, `code-reviewer`, `security-reviewer`), **9 slash commands** (`/claude-config-template:feature`, `:plan`, `:pr`, `:audit`, `:setup-template`, etc.), **3 skills** (principles + style guides), and **3 hooks** (branch discipline, agent gating, auto-format) available across every project where the plugin is enabled.
 
-In your new project, open Claude Code and say:
+The hooks use generic defaults — `src/` for source dir, `main` for default branch. Override per-project via env vars in `.envrc` (direnv) or your shell rc:
 
-> Set up Claude Code config from the template at `~/code/claude-config-template`. Read the project to infer placeholder values, draft an `answers.env`, show it to me for approval, then run the renderer.
+```bash
+export CLAUDE_CONFIG_SRC_DIR=apps                  # default: src
+export CLAUDE_CONFIG_FRONTEND_DIR=apps/frontend    # default: (none)
+export CLAUDE_CONFIG_DEFAULT_BRANCH=develop        # default: main
+```
+
+### Calibrate a specific project (optional)
+
+When you want a project to have a fully-tailored `.claude/` tree — agents and hooks with your *exact* test/lint/format commands, branch prefix, layer-split toggle, framework-specific style guides — run the bundled command from inside the project:
+
+```
+/claude-config-template:setup-template
+```
 
 Claude will:
 
-1. Read `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` / `manage.py` / etc., plus your source layout.
-2. Draft an `answers.env` with confidence labels (high / low / unknown).
-3. Ask you targeted questions only for the values it genuinely can't determine.
-4. Run `~/code/claude-config-template/setup.sh --target . --answers ./answers.env`.
-5. Add `.claude/settings.local.json`, `.claude/mcp.json`, and `answers.env` to `.gitignore`.
-6. Remind you to restart Claude Code to load the new hooks and slash commands.
+1. Read `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` / `manage.py` / etc.
+2. Draft an `answers.env` with confidence labels (HIGH / LOW / UNKNOWN).
+3. Show it to you and **wait for your approval or edits.**
+4. Run the bundled renderer to write a calibrated `.claude/` tree + `CLAUDE.md`.
+5. Update `.gitignore` and remind you to restart Claude Code.
 
-That's it. The flow takes about a minute on a conventional project.
+The whole flow takes about a minute on a conventional project. After it runs, both layers are active — the plugin commands stay namespaced (`/claude-config-template:feature`); the project-root commands are unnamespaced (`/feature`) and take precedence when they collide, because they have your project's specifics baked in.
 
-### Don't have Claude Code handy?
+### Old-school: clone + render manually
 
-Pre-filled `answers.env` files for common stacks live in [`examples/`](./examples). Copy one, edit, render manually:
+For maintainers, advanced users, or anyone who'd rather not depend on the plugin install:
 
 ```bash
+git clone https://github.com/JuanTrujilloDev/claude-config-template.git ~/code/claude-config-template
 cd ~/code/my-new-project
 cp ~/code/claude-config-template/examples/python-fastapi/answers.env ./answers.env
-# edit answers.env to match your project
 ~/code/claude-config-template/setup.sh --target . --answers ./answers.env
 ```
+
+Same renderer, same template, no plugin required.
+
+### Plugin only vs Plugin + calibration vs Manual clone
+
+|                                | Plugin only           | Plugin + `/setup-template` | Manual clone           |
+| ------------------------------ | --------------------- | -------------------------- | ---------------------- |
+| **Install effort**             | One line              | One line + 1 min/project   | Clone + edit answers   |
+| **Project specifics**          | Generic + env vars    | Baked in                   | Baked in               |
+| **Style guides**               | Stack-agnostic        | Tailored                   | Tailored               |
+| **Best for**                   | Many repos at once    | Flagship projects          | Forks, customization   |
 
 ---
 

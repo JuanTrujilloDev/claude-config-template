@@ -1,0 +1,79 @@
+---
+description: Render the full claude-config-template into the current project. Reads project files, infers placeholder values, asks for approval, then writes a calibrated `.claude/` tree + CLAUDE.md.
+---
+
+# /claude-config-template:setup-template
+
+Render the full template into the current project — same flow as cloning the repo and running `setup.sh` manually, but driven by Claude inside the project. After running, the project has a fully-calibrated `.claude/` tree and `CLAUDE.md` tuned to its specific stack, test command, branch convention, and toggles.
+
+This is the **opt-in calibration step** for users who installed the plugin and want more than the generic defaults. The agents, hooks, skills, and slash commands you got from `/plugin install` continue to work exactly the same — `/setup-template` just adds a project-root `.claude/` tree with project-specific configuration.
+
+## What this command does
+
+1. **Inspects the current project.** Reads `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `Gemfile`, `requirements.txt`, `manage.py`, `setup.cfg`, top-level `README.md`, and the source layout.
+
+2. **Drafts an `answers.env`** at the project root with one `KEY=VALUE` per placeholder defined in `${CLAUDE_PLUGIN_ROOT}/template.config.yaml`. Each value is classified by confidence:
+   - **HIGH** — derived directly from a config file (cite the file).
+   - **LOW** — best guess; show the alternative.
+   - **UNKNOWN** — left blank with a `# TODO: <what's missing>` line above.
+
+3. **Shows the draft to the user**, grouped by confidence level, and **WAITS for approval or edits.** Do not run the renderer until the user explicitly approves with "yes," "go," "render," or equivalent.
+
+4. **After approval, runs:**
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/setup.sh" --target . --answers ./answers.env
+   ```
+
+5. **Adds to `.gitignore`** (creating it if missing):
+   ```
+   .claude/settings.local.json
+   .claude/mcp.json
+   answers.env
+   ```
+
+6. **Reminds the user** that Claude Code needs to be restarted to pick up the new project-root hooks and slash commands. The plugin-level commands and agents remain available regardless.
+
+## Hard rules
+
+- **Do not invent placeholder values.** If a value is genuinely ambiguous, leave it UNKNOWN and ask one targeted clarifying question — don't guess.
+- **Wait for explicit approval** before invoking `setup.sh`. The draft step is not optional.
+- **Don't modify anything outside `answers.env`, `.claude/`, `CLAUDE.md`, and `.gitignore`.**
+- **Don't overwrite an existing `.claude/` tree without asking first.** If `.claude/` already exists, surface that to the user, show what would change, and let them decide.
+
+## Variant: just-go mode
+
+If the user prefixes the command with explicit phrasing like *"setup, just go"* or passes `--auto`, skip the approval gate and run with the inferred values directly. Useful for throwaway projects, dangerous on real ones — the user is taking responsibility for any wrong inferences.
+
+## What gets rendered
+
+A full `.claude/` tree calibrated to the project:
+
+- **`CLAUDE.md`** at the project root — principles, branch rules, agent map, dynamic context section, all referencing the project's actual test/lint/format commands and source dirs.
+- **`.claude/HELP.md`** — decision tree + worked examples customized for the stack.
+- **`.claude/settings.json`** — permissions tightened around the project's actual tools.
+- **`.claude/mcp.json.example`** — MCP server template.
+- **`.claude/rules/principles.md`**, **`backend-style.md`**, optional **`frontend-style.md`** — operating principles + style guides tailored to the stack.
+- **`.claude/agents/`** — same 7 agents as the plugin, but with placeholders rendered to specifics (e.g., `backend-dev` references the project's actual test command).
+- **`.claude/commands/`** — the 8 slash commands, locally available (non-namespaced).
+- **`.claude/hooks/`** — branch discipline, agent gating, auto-format — with the project's actual `src_dir` / `default_branch` baked in (no env-var fallback needed).
+
+## Relationship to the plugin
+
+After `/setup-template`, both layers are active:
+
+| Layer | Source | Naming |
+|---|---|---|
+| Plugin commands/agents | `${CLAUDE_PLUGIN_ROOT}/...` | Namespaced (`/claude-config-template:feature`) |
+| Project commands/agents | `./.claude/...` | Unnamespaced (`/feature`) |
+
+The project-root versions take precedence when names collide. This is intentional — the project versions have the calibrated test commands, branch prefixes, and toggles baked in.
+
+## Pre-filled examples
+
+If the user wants to skip inference entirely and use a known-good preset, point them at `${CLAUDE_PLUGIN_ROOT}/examples/` (when present). Common stacks: `python-fastapi`, `python-django`, `node-express`, `node-nextjs`. They can copy one and run `setup.sh` directly without going through inference.
+
+## Troubleshooting
+
+- **`setup.sh: command not found`** — the plugin didn't ship the bundled template. Reinstall: `/plugin update claude-config-template@juantrujillodev`.
+- **Missing `python3`** — `setup.sh` requires Python 3. Install it (it's preinstalled on macOS and most Linux).
+- **`.git/index.lock` errors when committing afterward** — leftover from a crashed git process. Run `rm -f .git/index.lock` and retry.
