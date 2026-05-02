@@ -1,19 +1,87 @@
+<div align="center">
+
+<img src="docs/logo.png" width="120" alt="claude-config-template logo" />
+
 # claude-config-template
 
-A reusable [Claude Code](https://docs.claude.com/en/docs/claude-code) project configuration. Drop it into a new repo, let Claude infer the right answers from your code, and you have a working `.claude/` setup with agents, slash commands, hooks, and rules tuned to your stack.
+**The Claude Code config you wished you had — set up by Claude itself.**
 
-## Why
+<sub>Stop reconfiguring `.claude/` from scratch on every project. Clone the template once, tell Claude *"set this up"*, and a minute later your repo has a battle-tested `.claude/` tree calibrated to your stack.</sub>
 
-Reconfiguring `.claude/` and `CLAUDE.md` from scratch every time wastes the patterns you've already debugged on past projects. This template extracts a battle-tested config (originally built for a Django/HTMX project) and parameterizes the project-specific bits so it works on FastAPI, Next.js, Go services, or whatever you're starting next.
+[![GitHub Sponsors](https://img.shields.io/badge/♥-Sponsor-30363D?logo=github-sponsors&logoColor=EA4AAA&style=flat)](https://github.com/sponsors/JuanTrujilloDev)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=ko-fi&logoColor=white&style=flat)](https://ko-fi.com/juantrujillodev)
+[![Quick Start](https://img.shields.io/badge/Quick_Start-→-2EA043?style=flat)](#-quick-start)
+[![Examples](https://img.shields.io/badge/Examples-4_stacks-8A2BE2?style=flat)](#-pre-filled-examples)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](#license)
 
-## Setup
+</div>
+
+---
+
+## 🎬 What it looks like
+
+```
+You:    set up Claude Code config from ~/code/claude-config-template
+
+Claude: 📂 Reading pyproject.toml, package.json, manage.py, source layout...
+        🔍 Detected: Python 3.12 · Django 5.2 · DRF · pytest · ruff · Celery
+        📝 Drafting answers.env...
+
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        ✓ HIGH confidence (15)    from pyproject.toml + manage.py
+            project_name        = 351 Exchange
+            language            = Python
+            backend_framework   = Django + DRF
+            test_cmd            = pytest
+            format_cmd          = ruff check --fix . && black .
+            ...
+        ⚠ LOW confidence (2)      best guess
+            branch_prefix       = 351   (inferred from PROJECT_NUMBER env)
+            ticket_tracker      = Plane (saw plane.alternova.dev in mcp.json)
+        ✗ UNKNOWN (1)             please confirm
+            enforce_layer_split = ?     # toggle BE/FE PR split?
+
+        Approve? (yes / edit / cancel)
+
+You:    yes, enforce_layer_split=yes
+
+Claude: ⚡ Rendering 25 files into ./.claude/ + ./CLAUDE.md
+        ✓ Added .claude/settings.local.json + answers.env to .gitignore
+        🔁 Restart Claude Code to load the new hooks + slash commands.
+
+        Done in 47 seconds. Welcome to your new /feature, /audit, /pr workflow.
+```
+
+That's the entire setup. Claude reads your project, infers what it can, asks about the rest, and writes the files. No 25-question terminal wizard — Claude already knows half the answers.
+
+---
+
+## 🪄 Why this exists
+
+Reconfiguring `.claude/` and `CLAUDE.md` from scratch every time wastes the patterns you've already debugged. This template extracts a **battle-tested config** (originally a Django/HTMX project where it had time to bake) and parameterizes the project-specific bits, so the same scaffold works on FastAPI, Next.js, Go services, or whatever you're shipping next.
+
+It's not a generic project scaffolder — [cookiecutter](https://github.com/cookiecutter/cookiecutter) exists. It's specifically for the `.claude/` and `CLAUDE.md` layer: the agents, slash commands, hooks, and operating principles that turn Claude Code from "fancy autocomplete" into a senior teammate.
+
+|                                  | Without this                                                | With this                                                |
+| -------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------- |
+| **Setup time**                   | 30 min copy-pasting old configs, hand-editing paths         | 60 seconds; Claude infers from your project files        |
+| **`.claude/` consistency**       | Different on every repo, none of them current               | Same battle-tested patterns everywhere                   |
+| **Agent coverage**               | Maybe a `code-reviewer.md` you cargo-culted                 | 7 agents (pm, *-dev, ui-designer, code/security review)  |
+| **Hooks**                        | None, or one `auto-format.sh` you forgot exists             | Branch discipline, agent gating, format-on-write         |
+| **Slash commands**               | Whatever you remember to type each time                     | `/feature`, `/plan`, `/commit`, `/pr`, `/audit`, etc.    |
+| **PR discipline**                | Vibes-based                                                 | ≤12 files / <3000 LOC, enforced before commit            |
+| **Updates**                      | Re-cargo-cult next project                                  | `setup.sh --target . --answers ./answers.env` re-renders |
+
+---
+
+## 🚀 Quick start
 
 You only ever set this up from inside Claude Code. There's no "answer 25 questions in your terminal" mode — Claude does the asking, because Claude can read your project and infer 90% of the answers without bothering you.
 
 ### One-time: clone the template
 
 ```bash
-git clone https://github.com/<your-username>/claude-config-template.git ~/code/claude-config-template
+git clone https://github.com/JuanTrujilloDev/claude-config-template.git ~/code/claude-config-template
 ```
 
 ### Per-project: tell Claude
@@ -23,129 +91,161 @@ In your new project, open Claude Code and say:
 > Set up Claude Code config from the template at `~/code/claude-config-template`. Read the project to infer placeholder values, draft an `answers.env`, show it to me for approval, then run the renderer.
 
 Claude will:
-1. Read `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` / etc. plus your source layout.
+
+1. Read `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` / `manage.py` / etc., plus your source layout.
 2. Draft an `answers.env` with confidence labels (high / low / unknown).
 3. Ask you targeted questions only for the values it genuinely can't determine.
-4. After you approve, run `~/code/claude-config-template/setup.sh --target . --answers ./answers.env`.
+4. Run `~/code/claude-config-template/setup.sh --target . --answers ./answers.env`.
 5. Add `.claude/settings.local.json`, `.claude/mcp.json`, and `answers.env` to `.gitignore`.
 6. Remind you to restart Claude Code to load the new hooks and slash commands.
 
-That's it. The flow takes ~2 minutes for a conventional project.
+That's it. The flow takes about a minute on a conventional project.
 
-### If you don't have Claude Code handy
+### Don't have Claude Code handy?
 
-Pre-filled `answers.env` files for common stacks live in [`examples/`](./examples). Copy one, edit, and render manually:
+Pre-filled `answers.env` files for common stacks live in [`examples/`](./examples). Copy one, edit, render manually:
 
 ```bash
 cd ~/code/my-new-project
 cp ~/code/claude-config-template/examples/python-fastapi/answers.env ./answers.env
-# edit answers.env
+# edit answers.env to match your project
 ~/code/claude-config-template/setup.sh --target . --answers ./answers.env
 ```
 
-## What you get
+---
+
+## 📦 What you get
 
 ```
 .claude/
-├── HELP.md                   # Decision tree + worked examples
-├── settings.json             # Permissions + hook registrations
+├── HELP.md                   # Decision tree + worked examples for the team
+├── settings.json             # Tightened permissions + hook registrations
 ├── mcp.json.example          # MCP server template (copy → mcp.json, fill in)
 ├── rules/
 │   ├── principles.md         # 8 always-loaded operating principles
 │   ├── backend-style.md      # Backend code conventions
-│   └── frontend-style.md     # Frontend code conventions (skipped for API-only)
+│   └── frontend-style.md     # Frontend code conventions (skipped if API-only)
 ├── agents/
 │   ├── pm.md                 # Decomposes features into PR-sized tickets
 │   ├── po-manager.md         # Briefs / SOWs / PRDs
 │   ├── backend-dev.md        # Backend implementation, Design First
-│   ├── frontend-dev.md       # Frontend implementation, Design First (optional)
-│   ├── ui-designer.md        # Wireframes + specs (optional)
-│   ├── code-reviewer.md      # Pre-merge correctness review
-│   └── security-reviewer.md  # Auth/permissions/data audit
+│   ├── frontend-dev.md       # Frontend implementation, Design First
+│   ├── ui-designer.md        # Wireframes + specs (delegated by frontend-dev)
+│   ├── code-reviewer.md      # Pre-merge correctness review (read-only)
+│   └── security-reviewer.md  # Auth/permissions/data audit (read-only)
 ├── commands/                 # /feature, /plan, /commit, /pr, /audit, /design, /idea, /sow
 └── hooks/
     ├── agent-enforcement.sh  # Blocks edits on default branch + non-trivial edits outside agents
     ├── auto-format.sh        # Runs your formatter after every Edit/Write
     └── coding-reminder.sh    # Injects principles reminder on coding prompts
-CLAUDE.md                     # Project guidelines, principles, branch rules, agent map (project root)
+CLAUDE.md                     # Project root: principles, branch rules, agent map, dynamic context
 ```
 
-## What gets parameterized
+Every agent ships with a **Gotchas** section calling out the specific failure modes for that role — `pm` against ticket inflation, `backend-dev` against speculative `*Service` classes, `code-reviewer` against confusing nits with blockers, etc.
+
+---
+
+## 🧩 What gets parameterized
 
 [`template.config.yaml`](./template.config.yaml) defines every placeholder. Highlights:
 
-| Variable | Example value |
-|---|---|
-| `project_name` | `Acme Billing` |
-| `language` / `language_version` | `Python` / `3.12+` |
-| `backend_framework` | `FastAPI` |
-| `frontend_framework` | `Next.js 14` (or skip if API-only) |
-| `src_dir`, `frontend_dir`, `tests_glob` | `src/`, `frontend/`, `tests/` |
-| `format_cmd`, `lint_cmd`, `test_cmd`, `build_cmd` | `ruff format .`, `ruff check .`, `pytest`, `uvicorn main:app --reload` |
-| `branch_prefix`, `default_branch` | `ACME`, `main` |
-| `max_files_per_pr`, `max_loc_per_pr` | `12`, `3000` |
-| `has_frontend`, `has_celery`, `has_e2e`, `enforce_layer_split` | `yes` / `no` toggles |
+| Variable                                                                   | Example                                                |
+| -------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `project_name`                                                             | `Acme Billing`                                         |
+| `language` / `language_version`                                            | `Python` / `3.12+`                                     |
+| `backend_framework`                                                        | `FastAPI`                                              |
+| `frontend_framework`                                                       | `Next.js 14` (or skip if API-only)                     |
+| `src_dir`, `frontend_dir`, `tests_glob`                                    | `src/`, `frontend/`, `tests/`                          |
+| `format_cmd`, `lint_cmd`, `test_cmd`, `build_cmd`                          | `ruff format .`, `ruff check .`, `pytest`, `npm run dev` |
+| `branch_prefix`, `default_branch`                                          | `ACME`, `main`                                         |
+| `max_files_per_pr`, `max_loc_per_pr`                                       | `12`, `3000`                                           |
+| `has_frontend`, `has_celery`, `has_e2e`, `enforce_layer_split` *(toggles)* | `yes` / `no`                                           |
 
-The toggles drive **conditional sections** so you don't end up with Celery boilerplate in a project that doesn't use Celery, or a `frontend-dev` agent in an API-only repo.
+The toggles drive **conditional sections** — `{{#has_celery}}…{{/has_celery}}` — so you don't end up with Celery boilerplate in a project that doesn't use it, or a `frontend-dev` agent in an API-only repo. File-level conditionals via `<!-- requires: has_frontend -->` drop whole files when the flag is falsy.
 
-## How it works
+---
 
-1. **Placeholders** use mustache syntax: `{{var_name}}` for direct substitution, `{{#var}}…{{/var}}` for "include if truthy", `{{^var}}…{{/var}}` for "include if falsy".
+## 🎨 Pre-filled examples
+
+| Stack                                       | Best for                                          | Layer split |
+| ------------------------------------------- | ------------------------------------------------- | ----------- |
+| [`python-fastapi`](./examples/python-fastapi) | API service, no frontend                          | n/a         |
+| [`python-django`](./examples/python-django)   | Django + DRF + HTMX/Alpine (closest to the original) | yes      |
+| [`node-express`](./examples/node-express)     | Express + TypeScript + Prisma                     | n/a         |
+| [`node-nextjs`](./examples/node-nextjs)       | Next.js 14 (App Router) full-stack                | no          |
+
+These are the answers Claude would arrive at for a vanilla version of each stack. Use them as starting points when the AI flow isn't an option.
+
+---
+
+## 🔧 How it works
+
+1. **Placeholders** use mustache syntax: `{{var}}` for direct substitution, `{{#var}}…{{/var}}` for "include if truthy", `{{^var}}…{{/var}}` for "include if falsy".
 2. **File-level conditionals** use a directive at the top of a template file: `<!-- requires: has_frontend -->`. The renderer drops the file if the var is falsy.
-3. **The renderer** is inline Python inside `setup.sh` (~50 lines). Narrow on purpose: no Jinja/Mustache library dependency, no surprise behavior. Standalone-tag whitespace cleanup keeps conditionals from leaving blank-line forests.
+3. **The renderer** is inline Python inside `setup.sh` — about 50 lines. No Jinja/Mustache library dependency, no surprise behavior. Standalone-tag whitespace cleanup keeps conditionals from leaving blank-line forests.
 
-## Pre-filled examples
+That's the whole engine. You can read it in five minutes and modify it without learning a new DSL.
 
-See [`examples/`](./examples):
+---
 
-- `python-fastapi/` — FastAPI service, no frontend
-- `python-django/` — Django + DRF + HTMX (closest to the original 351 Exchange config)
-- `node-express/` — Express API, no frontend
-- `node-nextjs/` — Next.js 14 full-stack
+## ♻️ Upgrading an already-configured project
 
-Use them as starting points. They're the answer Claude would arrive at for a vanilla version of each stack.
+Keep your `answers.env` checked into the project. Re-render after pulling template updates and `git diff` to see what changed:
 
-## Upgrading an already-configured project
+```bash
+cd ~/code/my-project
+TMP=$(mktemp -d)
+~/code/claude-config-template/setup.sh --target "$TMP" --answers ./answers.env
+diff -r .claude "$TMP/.claude"
+# Apply selectively, or replace .claude entirely if you don't have local mods.
+```
 
-See [`docs/upgrade-guide.md`](./docs/upgrade-guide.md). Short version: keep your `answers.env` checked into the project, re-render after pulling template updates, `git diff` to see what changed.
+Full guide: [`docs/upgrade-guide.md`](./docs/upgrade-guide.md).
 
-## Versioning
+---
 
-Tagged releases follow [SemVer](https://semver.org):
-- **Major** — breaking placeholder rename or removed file
-- **Minor** — new placeholder, new agent/command, new conditional section
-- **Patch** — bug fixes, doc updates
+## 🚫 Out of scope
 
-Pin to a tag if you want stability across re-renders: `git -C ~/code/claude-config-template checkout v1.2.0`.
+- **Not a generic project scaffolder.** [cookiecutter](https://github.com/cookiecutter/cookiecutter) exists.
+- **Not a Claude Code plugin marketplace.** See [Claude Code plugins docs](https://docs.claude.com/en/docs/claude-code/plugins).
+- **Doesn't replace Claude Code's built-in `/init`.** It complements it — run `/init` after rendering if you want Claude to scan your codebase and add project-specific notes to `CLAUDE.md`.
 
-## Out of scope
+---
 
-- Not a generic project scaffolder — [cookiecutter](https://github.com/cookiecutter/cookiecutter) exists.
-- Not a Claude Code plugin marketplace — see [Claude Code plugins docs](https://docs.claude.com/en/docs/claude-code/plugins).
-- Doesn't replace Claude Code's built-in `/init` command — it complements it. Run `/init` after rendering if you want Claude to scan your codebase and add project-specific notes to `CLAUDE.md`.
-
-## Reference
+## 📚 Reference
 
 - [`docs/what-each-file-does.md`](./docs/what-each-file-does.md) — per-file explainer
 - [`docs/upgrade-guide.md`](./docs/upgrade-guide.md) — pulling template updates into existing projects
 - [`template.config.yaml`](./template.config.yaml) — full placeholder schema
-- [`ai_setup_prompt.md`](./ai_setup_prompt.md) — verbatim version of the setup prompt, for users who want to script it
+- [`ai_setup_prompt.md`](./ai_setup_prompt.md) — verbatim setup prompt, for users who want to script it
 
-## Credits & inspiration
+---
 
-The four principles at the core of this template — *Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution* — come from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills), which distilled them from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls. If you only want the principles and don't need the agents/hooks/commands scaffold, that single-file `CLAUDE.md` is a great starting point.
+## 🙏 Credits & inspiration
 
-Several patterns — embedded "Gotchas" sections in agents, tighter permission wildcards in `settings.json`, dynamic context injection via `` !`command` `` — were adapted from [shanraisshan/claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice).
+The four core principles — *Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution* — come from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills), distilled from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls. If you only want the principles and not the agents/hooks/commands scaffold, that single-file `CLAUDE.md` is a great starting point.
+
+Several patterns — embedded "Gotchas" sections in agents, tighter permission wildcards, dynamic context injection via `` !`command` `` — were adapted from [shanraisshan/claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice).
 
 The agent / hook / micro-PR architecture was lifted from a working Django/HTMX project where it had time to bake.
 
-## Support
+---
+
+## ☕ Support
 
 If this saved you time, you can support continued work on it:
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-30363D?logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/JuanTrujilloDev)
-[![Ko-fi](https://img.shields.io/badge/Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/juantrujillodev)
+[![GitHub Sponsors](https://img.shields.io/badge/♥-Sponsor-30363D?logo=github-sponsors&logoColor=EA4AAA&style=for-the-badge)](https://github.com/sponsors/JuanTrujilloDev)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Tip-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge)](https://ko-fi.com/juantrujillodev)
+
+Sponsorship buys me time. Time becomes side-project hours. Side-project hours become open-source releases — like a from-scratch async Python web framework I'm currently shipping (third attempt, this is the one), [`notihub`](https://pypi.org/project/notihub/) on PyPI, and whatever the next "I keep rebuilding this on every project" tool turns out to be.
+
+---
 
 ## License
 
-MIT.
+MIT. Use it, fork it, ship it. A star on the repo is appreciated but not required.
+
+<div align="center">
+<sub>Made with ☕ + lo-fi in Colombia by <a href="https://juantrujillo.dev">Juan Trujillo</a> · <a href="https://github.com/JuanTrujilloDev">@JuanTrujilloDev</a></sub>
+</div>
