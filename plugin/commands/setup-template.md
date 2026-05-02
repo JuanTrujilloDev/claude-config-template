@@ -40,6 +40,18 @@ This is the **opt-in calibration step** for users who installed the plugin and w
 - **Don't modify anything outside `answers.env`, `.claude/`, `CLAUDE.md`, and `.gitignore`.**
 - **Don't overwrite an existing `.claude/` tree without asking first.** If `.claude/` already exists, surface that to the user, show what would change, and let them decide.
 
+## Honor conditional questions (`when:` clauses)
+
+`template.config.yaml` lists each placeholder with an optional `when:` clause that gates whether the variable applies. **Honor those clauses strictly** — both in the questions you ask and in the `answers.env` you write.
+
+Concrete rules:
+
+- **`mcp_plane_workspace` and `mcp_plane_host`** — only ask, only include in `answers.env`, only render related sections **if `ticket_tracker = Plane`**. For any other tracker, omit these lines entirely from the draft (don't include them as blank lines or commented placeholders). The renderer's mustache conditionals will skip the Plane-related blocks automatically because the synthetic flag `ticket_tracker_plane` won't be set.
+- **`frontend_framework` and `frontend_dir`** — only ask if `has_frontend = yes`. If the project is API-only, omit both lines from `answers.env`. The renderer drops files marked `<!-- requires: has_frontend -->` (e.g., `frontend-dev` agent, `frontend-style` rule).
+- **`has_e2e` and `enforce_layer_split`** — only ask if `has_frontend = yes`. Skip entirely for API-only projects.
+
+The general rule: **if a `when:` clause isn't satisfied, the variable doesn't exist for this project.** Don't ask, don't write, don't display in the confidence-grouped draft. This keeps the conversation tight and the rendered output clean.
+
 ## Variant: just-go mode
 
 If the user prefixes the command with explicit phrasing like *"setup, just go"* or passes `--auto`, skip the approval gate and run with the inferred values directly. Useful for throwaway projects, dangerous on real ones — the user is taking responsibility for any wrong inferences.

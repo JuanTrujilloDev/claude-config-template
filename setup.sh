@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # claude-config-template renderer.
 #
-# Reads template/ and an answers file, substitutes {{var}} placeholders
+# Reads template/ + an answers file, substitutes {{var}} placeholders
 # (and {{#var}}…{{/var}} / {{^var}}…{{/var}} sections), drops files marked
-# with `<!-- requires: var -->` when the var is falsy, and writes the
-# result to a target directory.
+# `<!-- requires: var -->` when the var is falsy, writes to a target dir.
 #
 # This is NOT an interactive setup. The expected workflow is:
 #
@@ -13,7 +12,7 @@
 #      Claude reads your project, drafts an answers.env, asks you to confirm.
 #   3. Claude runs this script to render.
 #
-# If you'd rather drive it by hand, copy one of the pre-filled examples:
+# To drive it by hand, copy a pre-filled example:
 #   cp examples/python-fastapi/answers.env ./answers.env
 #   ./setup.sh --target /path/to/project --answers ./answers.env
 #
@@ -21,8 +20,8 @@
 #   setup.sh --target <dir> --answers <file>
 #   setup.sh --target <dir> --answers -        # read answers from stdin
 #
-# Answers file format: KEY=VALUE per line; # comments allowed.
-# See template.config.yaml for the full list of placeholders.
+# Requires: bash 3.2+ (works on stock macOS bash) and python3.
+# All non-trivial logic runs in python3 to stay portable across shells.
 
 set -euo pipefail
 
@@ -32,8 +31,8 @@ TEMPLATE_DIR="$SCRIPT_DIR/template"
 TARGET=""
 ANSWERS_FILE=""
 
-while [[ $# -gt 0 ]]; do
-  case $1 in
+while [ $# -gt 0 ]; do
+  case "$1" in
     --target) TARGET="$2"; shift 2 ;;
     --answers) ANSWERS_FILE="$2"; shift 2 ;;
     -h|--help)
@@ -44,19 +43,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$TARGET" ]]; then
+if [ -z "$TARGET" ]; then
   echo "Error: --target is required." >&2
   echo "Usage: setup.sh --target <dir> --answers <file>" >&2
   exit 1
 fi
 
-if [[ -z "$ANSWERS_FILE" ]]; then
+if [ -z "$ANSWERS_FILE" ]; then
   echo "Error: --answers is required." >&2
   echo "" >&2
   echo "This script is not interactive. The standard flow is:" >&2
   echo "  1. Open Claude Code in your new project." >&2
   echo "  2. Tell Claude: 'set up Claude Code config from $SCRIPT_DIR'." >&2
-  echo "  3. Claude drafts an answers.env, asks you to confirm, then runs this script." >&2
+  echo "  3. Claude drafts an answers.env, asks to confirm, then runs this script." >&2
   echo "" >&2
   echo "To drive it by hand, start from a pre-filled example:" >&2
   echo "  cp $SCRIPT_DIR/examples/python-fastapi/answers.env ./answers.env" >&2
@@ -64,7 +63,7 @@ if [[ -z "$ANSWERS_FILE" ]]; then
   exit 1
 fi
 
-if [[ ! -d "$TEMPLATE_DIR" ]]; then
+if [ ! -d "$TEMPLATE_DIR" ]; then
   echo "Error: template/ not found at $TEMPLATE_DIR" >&2
   exit 1
 fi
@@ -74,90 +73,71 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-# ---------------------------------------------------------------------------
-# Read answers.
-# ---------------------------------------------------------------------------
-declare -A ANSWERS
+mkdir -p "$TARGET"
 
-if [[ "$ANSWERS_FILE" == "-" ]]; then
-  while IFS='=' read -r key val; do
-    [[ -z "$key" || "$key" =~ ^# ]] && continue
-    ANSWERS["$key"]="${val}"
-  done
+# Pipe answers (file or stdin) into python; everything else happens there.
+if [ "$ANSWERS_FILE" = "-" ]; then
+  ANSWERS_INPUT="$(cat)"
 else
-  if [[ ! -f "$ANSWERS_FILE" ]]; then
+  if [ ! -f "$ANSWERS_FILE" ]; then
     echo "Error: answers file not found: $ANSWERS_FILE" >&2
     exit 1
   fi
-  while IFS='=' read -r key val; do
-    [[ -z "$key" || "$key" =~ ^# ]] && continue
-    ANSWERS["$key"]="${val}"
-  done < "$ANSWERS_FILE"
+  ANSWERS_INPUT="$(cat "$ANSWERS_FILE")"
 fi
 
-# ---------------------------------------------------------------------------
-# Derive synthetic flags. ticket_tracker_<name>=yes for {{#flag}} sections,
-# and normalize yes/no booleans (anything blank/no/false → empty string,
-# which the renderer treats as falsy).
-# ---------------------------------------------------------------------------
-case "${ANSWERS[ticket_tracker]:-}" in
-  Plane)  ANSWERS[ticket_tracker_plane]=yes ;;
-  Jira)   ANSWERS[ticket_tracker_jira]=yes ;;
-  Linear) ANSWERS[ticket_tracker_linear]=yes ;;
-  GitHub) ANSWERS[ticket_tracker_github]=yes ;;
-  none)   : ;;
-esac
+# All real work happens in python3 — works on macOS bash 3.2 because we
+# never use associative arrays in bash itself.
+ANSWERS_INPUT="$ANSWERS_INPUT" \
+  TEMPLATE_DIR="$TEMPLATE_DIR" \
+  TARGET="$TARGET" \
+  python3 - <<'PYEOF'
+import os, re, sys, shutil, stat
 
-for key in has_frontend has_celery has_e2e enforce_layer_split; do
-  v="${ANSWERS[$key]:-}"
-  if [[ "$v" == "no" || "$v" == "false" || -z "$v" ]]; then
-    ANSWERS["$key"]=""
-  fi
-done
+TEMPLATE_DIR = os.environ["TEMPLATE_DIR"]
+TARGET = os.environ["TARGET"]
+ANSWERS_INPUT = os.environ["ANSWERS_INPUT"]
 
-mkdir -p "$TARGET"
+# 1. Parse KEY=VALUE answers (skip blank lines + #-comments).
+ANS = {}
+for line in ANSWERS_INPUT.splitlines():
+    line = line.rstrip("\n")
+    if not line or line.lstrip().startswith("#"):
+        continue
+    if "=" not in line:
+        continue
+    k, v = line.split("=", 1)
+    ANS[k.strip()] = v
 
-ANSWERS_JSON=$(python3 -c "
-import json, sys
-ans = {}
-for line in sys.stdin:
-    line = line.rstrip('\n')
-    if '=' not in line: continue
-    k, v = line.split('=', 1)
-    ans[k] = v
-print(json.dumps(ans))
-" <<EOF_ANSWERS
-$(for k in "${!ANSWERS[@]}"; do printf "%s=%s\n" "$k" "${ANSWERS[$k]}"; done)
-EOF_ANSWERS
-)
+# 2. Synthesize ticket_tracker_<flag>=yes for {{#flag}} sections.
+tt = ANS.get("ticket_tracker", "")
+flag_map = {
+    "Plane":  "ticket_tracker_plane",
+    "Jira":   "ticket_tracker_jira",
+    "Linear": "ticket_tracker_linear",
+    "GitHub": "ticket_tracker_github",
+}
+if tt in flag_map:
+    ANS[flag_map[tt]] = "yes"
 
-# ---------------------------------------------------------------------------
-# Render.
-# ---------------------------------------------------------------------------
-python3 - "$TEMPLATE_DIR" "$TARGET" "$ANSWERS_JSON" <<'PYEOF'
-import os, re, sys, json, shutil, stat
-
-TEMPLATE_DIR, TARGET, ANSWERS_JSON = sys.argv[1], sys.argv[2], sys.argv[3]
-ANS = json.loads(ANSWERS_JSON)
+# 3. Normalize yes/no booleans — anything blank/no/false → empty (= falsy).
+for k in ("has_frontend", "has_celery", "has_e2e", "enforce_layer_split"):
+    v = ANS.get(k, "").strip().lower()
+    if v in ("", "no", "false"):
+        ANS[k] = ""
 
 def truthy(v):
     if v is None: return False
     s = str(v).strip().lower()
     return s not in ("", "no", "false", "0", "none")
 
-# Mustache-style sections.  {{#var}}...{{/var}} kept iff truthy(ANS[var]);
-# {{^var}}...{{/var}} kept iff falsy.  Standalone tags (alone on a line, only
-# whitespace around them) eat the trailing newline so conditionals don't leave
-# a forest of blank lines.
+# 4. Mustache-style template renderer with standalone-tag whitespace cleanup.
 STANDALONE_RE = re.compile(r"^[ \t]*\{\{[#^/](\w+)\}\}[ \t]*\n", re.MULTILINE)
 SECTION_RE = re.compile(r"\{\{([#^])(\w+)\}\}(.*?)\{\{/\2\}\}", re.DOTALL)
 VAR_RE = re.compile(r"\{\{(\w+)\}\}")
 
 def render(text):
-    def standalone_marker(m):
-        return m.group(0).rstrip("\n") + "\x00\n"
-    text = STANDALONE_RE.sub(standalone_marker, text)
-
+    text = STANDALONE_RE.sub(lambda m: m.group(0).rstrip("\n") + "\x00\n", text)
     prev = None
     while text != prev:
         prev = text
@@ -166,11 +146,11 @@ def render(text):
             keep = truthy(ANS.get(name)) if kind == "#" else not truthy(ANS.get(name))
             return body if keep else ""
         text = SECTION_RE.sub(repl, text)
-
     text = re.sub(r"\x00\n", "", text)
     text = VAR_RE.sub(lambda m: ANS.get(m.group(1), ""), text)
     return text
 
+# 5. Walk template/, render each file, honor <!-- requires: var --> directives.
 written, skipped = 0, 0
 for root, dirs, files in os.walk(TEMPLATE_DIR):
     rel = os.path.relpath(root, TEMPLATE_DIR)
@@ -202,12 +182,10 @@ for root, dirs, files in os.walk(TEMPLATE_DIR):
             os.chmod(dst, os.stat(dst).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         written += 1
 
-print(f"  rendered {written} files{', skipped ' + str(skipped) if skipped else ''}")
+extra = f", skipped {skipped}" if skipped else ""
+print(f"  rendered {written} files{extra}")
 PYEOF
 
-# ---------------------------------------------------------------------------
-# Done.
-# ---------------------------------------------------------------------------
 echo ""
 echo "✓ Template rendered to $TARGET"
 echo ""
