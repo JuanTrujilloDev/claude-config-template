@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/logo.png" width="120" alt="claude-config-template logo" />
+<img src="docs/logo.svg" width="120" alt="claude-config-template logo" />
 
 # claude-config-template
 
