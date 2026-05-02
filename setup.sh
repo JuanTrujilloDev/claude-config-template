@@ -186,6 +186,14 @@ extra = f", skipped {skipped}" if skipped else ""
 print(f"  rendered {written} files{extra}")
 PYEOF
 
+# Symlink .claude/CLAUDE.md → ../CLAUDE.md so both paths resolve to the same
+# file (single source of truth, no drift between project root and .claude/).
+if [ -f "$TARGET/CLAUDE.md" ] && [ -d "$TARGET/.claude" ]; then
+  if [ ! -e "$TARGET/.claude/CLAUDE.md" ] || [ -L "$TARGET/.claude/CLAUDE.md" ]; then
+    ( cd "$TARGET/.claude" && ln -sf ../CLAUDE.md CLAUDE.md )
+  fi
+fi
+
 echo ""
 echo "✓ Template rendered to $TARGET"
 echo ""
